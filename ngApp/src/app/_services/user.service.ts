@@ -11,7 +11,9 @@ const httpOptions = {
   providedIn: 'root'
 })
 export class UserService {
-  private _registerUrl = "http://localhost:3000/api/register";
+  private _rootUrl     = "http://localhost:3000/api/";
+  private _registerUrl = this._rootUrl + "register";
+  private _loginUrl    = this._rootUrl + "login";
 
   constructor(private http:HttpClient) { }
 
@@ -21,4 +23,15 @@ export class UserService {
   	return this.http.post<any>(this._registerUrl, user, httpOptions);
   }
 
+  loginUser(user:User){
+  	return this.http.post<any>(this._loginUrl, user, httpOptions);
+  }
+
+  loggedIn(){
+    return !!localStorage.getItem('token');
+  }
+
+  getToken(){
+    return localStorage.getItem('token');
+  }
 }
