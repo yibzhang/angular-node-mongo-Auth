@@ -27,11 +27,17 @@ export class UserService {
   	return this.http.post<any>(this._loginUrl, user, httpOptions);
   }
 
-  loggedIn(){
+  logOutUser(){
+    localStorage.removeItem('currentUserEmail');
+    localStorage.removeItem('token');
+  }
+
+  isLoggedIn(){
     return !!localStorage.getItem('token');
   }
 
   getToken(){
     return localStorage.getItem('token');
   }
+
 }

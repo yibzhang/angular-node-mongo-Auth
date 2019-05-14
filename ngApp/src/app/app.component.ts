@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { UserService } from './_services/user.service';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +8,21 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'auth';
+  //title = 'auth';
+  //private loggedIn:boolean;
+
+  constructor(private userService:UserService,
+  			  private router:Router){}
+  ngOnInit(){
+	//this.loggedIn = this.userService.loggedIn();
+  }
+
+  isLoggedIn(){
+  	return this.userService.isLoggedIn();
+  }
+
+  logOutUser(){
+  	this.userService.logOutUser();
+  	//this.router.navigate(['/login']);
+  }
 }
