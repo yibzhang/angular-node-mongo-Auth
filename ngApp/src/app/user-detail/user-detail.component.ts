@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { User } from '../_models/user'; 
+import { UserService } from '../_services/user.service';
 
 @Component({
   selector: 'app-user-detail',
@@ -7,10 +8,10 @@ import { User } from '../_models/user';
   styleUrls: ['./user-detail.component.css']
 })
 export class UserDetailComponent implements OnInit {
-  currentUserInfo:User;	
-  test='test';
+  currentUserInfo:User;
+  editMode:boolean = false;
 
-  constructor() {
+  constructor(private userService:UserService) {
     this.currentUserInfo = new User();
   }
 
@@ -20,7 +21,22 @@ export class UserDetailComponent implements OnInit {
 
   getCurrentUser(){  	
   	this.currentUserInfo.email = localStorage.getItem("currentUserEmail");
-  	console.log(this.currentUserInfo.email)
+  	//console.log(this.currentUserInfo.email)
+  }
+
+  updateUser(){    
+    localStorage.setItem("currentUserEmail", this.currentUserInfo.email);
+    this.userService.updateUser(this.currentUserInfo).subscribe(
+      res=>console.log(res),
+      err=>console.log(err)
+      );
+    this.editMode = false;
+    //console.log("Change to edit mode");
+  }
+
+  isEditMode(){
+    this.editMode = true;
+    //console.log("Change to userdetail mode");
   }
 
 }

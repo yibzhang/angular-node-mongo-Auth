@@ -14,6 +14,7 @@ export class UserService {
   private _rootUrl     = "http://localhost:3000/api/";
   private _registerUrl = this._rootUrl + "register";
   private _loginUrl    = this._rootUrl + "login";
+  private _updateUrl   = this._rootUrl + "update";
 
   constructor(private http:HttpClient) { }
 
@@ -30,6 +31,11 @@ export class UserService {
   logOutUser(){
     localStorage.removeItem('currentUserEmail');
     localStorage.removeItem('token');
+  }
+
+  updateUser(user:User){
+    //console.log("put user info to backend");
+    return this.http.put<any>(this._updateUrl, user, httpOptions);
   }
 
   isLoggedIn(){
