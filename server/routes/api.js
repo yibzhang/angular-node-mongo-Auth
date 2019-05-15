@@ -39,10 +39,34 @@ router.put('/update', (req, res)=>{
 	if(!req.headers.authorization) {
 		return res.status(401).send("Unauthorized request")
 	}
+	if(!req.body.email){
+		return res.status(401).send("Request update is null")
+	}
+	// get token from authorization header, then decode it
 	let token   = req.headers.authorization.split(' ')[1]
-	let payload = jwt.verify(token, tokenKey)
-	console.log(payload.subject)
-	res.status(200).send("Updating user feature not yet finished");
+	jwt.verify(token, tokenKey, (error, payload)=>{
+		console.log(payload)
+		// token can't be decoded
+		if(error){
+			console.log(error)
+			return res.status(401).send("Unauthorized request")
+		}		
+		// find one user with the decoded id
+		User.findOne({_id: payload.subject}, (error, user)=>{
+			// can't find the id from database
+			if(error){
+				console.log(error)
+				return res.status(401).send("User can't be found")
+			}
+			// find user, update email and save
+			user.email = req.body.email
+			user.save((error, updatedUser)=>{
+				error?console.log(error):res.status(200).send({"token":token, "email":user.email})
+			})
+			
+		})
+			
+	})
 })
 
 module.exports = router
