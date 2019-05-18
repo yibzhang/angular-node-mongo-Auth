@@ -10,63 +10,92 @@ mongoose.connect(db, error=>{
 	error ? console.log("error " + error) : console.log("DB connect successfully")
 })
 
-router.get('/', (req, res)=>{
-	res.send("Send from api.js")
-})
 
-router.post('/register', (req, res)=>{
+
+router.post('/register', checkIfEmailExistInDB, (req, res)=>{
 	let registerUser = req.body
 	let user         = new User(registerUser)
+
+	// Save email to database
 	user.save((error, registeredUser) => {
-		error ? console.log(error) 
-		: (payload = { subject: registerUser._id},		
-		   token   = jwt.sign(payload, tokenKey),
-		   res.status(200).send({"token":token, "email":user.email}))
+		if(error)return res.status(503).send(error)
+		
+		// Send token and email as response
+		payload = {subject: registerUser._id}		
+		token   = jwt.sign(payload, tokenKey)
+		return res.status(200).send({"token":token, "email":user.email})
 	})
 })
 
 router.post('/login', (req, res)=>{
 	let loginUser = req.body
 
-	User.findOne({email: loginUser.email}, (error, user)=>{
-		user ? (loginUser.password == user.password ? (payload = {subject:user._id}, token = jwt.sign(payload, tokenKey),res.status(200).send({"token":token, "email":user.email})) 
-				: res.status(401).send("Wrong password"))
-		: (res.status(401).send("Invalid email"))
+	// Find email from database
+	User.findOne({email: loginUser.email}, (error, user)=>{		
+		if(error)return res.status(503).send(error)
+		
+		// User doesn't exist
+		if(!user)return res.status(404).send("User doesn't exist")
+		// Password error
+		if(loginUser.password != user.password)return res.status(401).send("Wrong password")
+		
+		// Send token and email as response
+		payload = {subject:user._id}
+		token = jwt.sign(payload, tokenKey)
+		return res.status(200).send({"token":token, "email":user.email})
 	})
 })
 
-router.put('/update', (req, res)=>{
+router.route('/user')
+	.put(tokenVerification, (req, res)=>{
+		
+		// Find user with _id
+		User.findOne({_id: req.body._id}, (error, user)=>{
+			if(error) return res.status(503).send(error)			
+			
+			// User doesn't exist
+			if(!user) return res.status(404).send("User doesn't exist")
+
+			// find user, update email and save
+			user.email = req.body.email
+			token = req.headers.authorization.split(' ')[1]
+			user.save((error, updatedUser)=>{
+				return error?res.status(503).send(error):res.status(200).send({"token":token, "email":user.email})
+			})			
+		})
+	})
+	.delete(tokenVerification, (req, res)=>{
+
+		// Delete user with id
+		User.deleteOne({_id: req.body._id}, (error, user)=>{
+			return error?res.status(503).send(error):res.status(200).send("User delete successfully")
+		})
+	})
+
+// Middleware functions
+function tokenVerification(req, res, next){
+	// Check if request is authorized
 	if(!req.headers.authorization) {
 		return res.status(401).send("Unauthorized request")
 	}
-	if(!req.body.email){
-		return res.status(401).send("Request update is null")
-	}
-	// get token from authorization header, then decode it
-	let token   = req.headers.authorization.split(' ')[1]
-	jwt.verify(token, tokenKey, (error, payload)=>{
-		console.log(payload)
-		// token can't be decoded
-		if(error){
-			console.log(error)
-			return res.status(401).send("Unauthorized request")
-		}		
-		// find one user with the decoded id
-		User.findOne({_id: payload.subject}, (error, user)=>{
-			// can't find the id from database
-			if(error){
-				console.log(error)
-				return res.status(401).send("User can't be found")
-			}
-			// find user, update email and save
-			user.email = req.body.email
-			user.save((error, updatedUser)=>{
-				error?console.log(error):res.status(200).send({"token":token, "email":user.email})
-			})
-			
-		})
-			
+	// Get token from authorization header, then decode it
+	jwt.verify(req.headers.authorization.split(' ')[1], tokenKey, (error, payload)=>{
+		if(error)return res.status(401).send("Unauthorized request")
+		
+		req.body._id = payload.subject;
+		next()
 	})
-})
+}
+
+function checkIfEmailExistInDB(req, res, next){
+	// Check if email exists
+	User.findOne({email: req.body.email}, (error, user)=>{
+		//if(error)return next(error)
+		//if(user)return next("Register email exits")
+		if(error)return res.status(503).send(error)
+		if(user)return res.status(409).send("User email exists")
+		return next()
+	})
+}
 
 module.exports = router

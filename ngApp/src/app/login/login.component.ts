@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
 import { UserService } from '../_services/user.service';
 import { User } from '../_models/user';
 
@@ -9,19 +11,32 @@ import { User } from '../_models/user';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
-  loginUserInfo:User;
+  //loginUserInfo:User;
+  loginForm: FormGroup;
+  isSubmitted: boolean;
 
   constructor(private userService: UserService,
-              private router: Router) { 
-    this.loginUserInfo = new User();
+              private router: Router,
+              private formBuilder: FormBuilder) { 
+    //this.loginUserInfo = new User();
   }
 
   ngOnInit() {
     if(this.userService.isLoggedIn()) this.router.navigate(['/userDetail']);
+    this.loginForm = this.formBuilder.group({
+      email:['', [Validators.required, Validators.email]],
+      password:['', Validators.required]
+    });
   }
 
+  get f() { return this.loginForm.controls; }
+
   loginUser(){
-  	this.userService.loginUser(this.loginUserInfo).subscribe(
+    this.isSubmitted = true;    
+  	if(this.loginForm.invalid){return;}
+    //console.log(this.loginForm.value)
+    
+    this.userService.loginUser(this.loginForm.value).subscribe(
   		res => {
   			console.log(res);
   			localStorage.setItem("token", res.token);
@@ -29,6 +44,6 @@ export class LoginComponent implements OnInit {
         this.router.navigate(["./userDetail"]);
   		},
   		err => console.log(err)  		
-  		);
+  	);
   }
 }

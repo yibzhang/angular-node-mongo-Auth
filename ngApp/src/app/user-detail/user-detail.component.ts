@@ -34,6 +34,14 @@ export class UserDetailComponent implements OnInit {
     //console.log("Change to edit mode");
   }
 
+  deleteUser(){
+    this.userService.deleteUser().subscribe(
+      res=>console.log(res),
+      err=>console.log(err)
+      );
+    this.userService.logOutUser();
+  }
+
   isEditMode(){
     this.editMode = true;
     //console.log("Change to userdetail mode");
