@@ -15,6 +15,9 @@ export class RegisterComponent implements OnInit {
   //registerUserInfo:User;
   registerForm:FormGroup;
   isSubmitted:boolean;
+  
+  errorResponseMessage:string;  
+  errorResponseCode:number;
 
   constructor(private userService:UserService,
               private router:Router,
@@ -48,7 +51,12 @@ export class RegisterComponent implements OnInit {
         localStorage.setItem('currentUserEmail', res.email);
         this.router.navigate(['/userDetail']);
       },
-  		err=>console.log(err)
+  		err=>{
+        console.log(err);      
+        this.errorResponseCode = err.status;
+        this.errorResponseMessage = err.error;
+        this.registerForm.controls["email"].setErrors({errorResponse:true});
+      }
   		)
   }
 }

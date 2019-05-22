@@ -15,6 +15,9 @@ export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   isSubmitted: boolean;
 
+  errorResponseMessage:string;
+  errorResponseCode:number;
+
   constructor(private userService: UserService,
               private router: Router,
               private formBuilder: FormBuilder) { 
@@ -43,7 +46,15 @@ export class LoginComponent implements OnInit {
         localStorage.setItem("currentUserEmail", res.email);
         this.router.navigate(["./userDetail"]);
   		},
-  		err => console.log(err)  		
+  		err => {
+        console.log(err);
+        this.errorResponseCode = err.status;
+        this.errorResponseMessage = err.error;
+        if(this.errorResponseCode == 401)
+          this.loginForm.controls["password"].setErrors({errorResponse: true})
+        else
+          this.loginForm.controls["email"].setErrors({errorResponse: true});
+      }  		
   	);
   }
 }
